@@ -1,3 +1,15 @@
+#include <NewPing.h>
+
+// NOTE: These pins might be backwards
+#define TRIGGER_PIN  13  // Arduino pin tied to trigger pin on the ultrasonic sensor.
+#define ECHO_PIN     12  // Arduino pin tied to echo pin on the ultrasonic sensor.
+#define MAX_DISTANCE 100 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
+
+NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance to register.
+
+// ********************************* //
+// MOTION CONTROLS BELOW
+// ********************************* //
 
 enum Direction { FORWARD, BACKWARD };
 enum Wheel { LEFT, RIGHT };
@@ -48,8 +60,10 @@ void turn_left();
 void stop(); 
 
 void setup() {
-  // put your setup code here, to run once:
-  // Setting up the Left motor controls
+  // Setting up the motion sensor input receiver
+  Serial.begin(115200); // Open serial monitor at 115200 baud to see ping results.
+  
+  // Setting up the motor controls
   for(int i=0; i<2; i++) {
     pinMode(motor_controls[i].motor_pin, OUTPUT);
     pinMode(motor_controls[i].dir_pin_a, OUTPUT);
@@ -58,13 +72,13 @@ void setup() {
 }
 
 void loop() {
-//  stop();
-//  move(FORWARD, 150);
-//  delay(2000);
-  turn_right();
-  delay(1000);
-  turn_left();
-  delay(1000);
+  delay(50);  // give some time between pings - this is to help compensate for the delay in input
+  unsigned int sonar_sensor_input = sonar.ping();
+  if(sonar_sensor_input / US_ROUNDTRIP_CM <= 15) {  // if the robot is closer than 15 CM to an object
+    stop();
+  } else {
+    move(FORWARD, 150);
+  }
 }
 
 void move(Direction dir, int speed) {
